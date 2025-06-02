@@ -61,63 +61,60 @@ export default function ForgotPasswordForm() {
   });
 
   return (
-    <div className="mx-auto flex h-fit w-full max-w-[40rem] flex-col rounded-lg border bg-white p-10 shadow-lg">
-      <div className="flex flex-col gap-10">
-        <div className="flex-1">
-          <form action={mutate} className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800">
-              {translation?.lang["Forgot your password?"]}
-            </h2>
-            <p className="text-gray-600">
-              {
-                translation?.lang[
-                  "Enter your email address and we'll send you a link to reset your password."
-                ]
-              }
-            </p>
-            <div className="space-y-2">
-              <Input
-                label={translation?.lang["email"] ?? ""}
-                type="email"
-                required
-                name="email"
-              />
+    <div className="space-y-6">
+      {/* Reset Password Form */}
+      <form action={mutate} className="space-y-6">
+        <div className="space-y-2">
+          <Input
+            label={translation?.lang["email"] ?? "Email"}
+            type="email"
+            required
+            name="email"
+          />
 
-              {errors.length > 0 && (
-                <div className="space-y-1">
-                  {errors.map((error, index) => (
-                    <p key={index} className="text-sm text-red-500">
-                      {error}
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              {successMessage && (
-                <p className="text-sm text-green-500">{successMessage}</p>
-              )}
+          {errors.length > 0 && (
+            <div className="space-y-1">
+              {errors.map((error, index) => (
+                <p key={index} className="text-sm text-red-500">
+                  {error}
+                </p>
+              ))}
             </div>
+          )}
 
-            <PrimaryButton loading={isPending} className="w-full">
-              {translation?.lang["Send Reset Link"]}
-            </PrimaryButton>
-          </form>
-
-          <div className="mt-6 flex w-full flex-col items-center justify-center gap-6">
-            <div className="mx-auto flex w-full items-center justify-center space-x-3">
-              <hr className="w-36 border-gray-300 max-sm:flex-1" />
-              <span className="text-sm text-gray-500">
-                {translation?.lang["or"]}
-              </span>
-              <hr className="w-36 border-gray-300 max-sm:flex-1" />
-            </div>
-            <Link href="/login">
-              <SecondaryButton className="">
-                {translation?.lang["Return to Login"]}
-              </SecondaryButton>
-            </Link>
-          </div>
+          {successMessage && (
+            <p className="text-sm text-green-500">{successMessage}</p>
+          )}
         </div>
+
+        <PrimaryButton loading={isPending} className="w-full">
+          {translation?.lang["Send Reset Link"] ?? "Send Reset Link"}
+        </PrimaryButton>
+      </form>
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-white px-2 text-gray-500">
+            {translation?.lang["or"] ?? "or"}
+          </span>
+        </div>
+      </div>
+
+      {/* Back to Login Link */}
+      <div className="text-center">
+        <p className="text-sm text-gray-600">
+          Remember your password?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-blue-600 transition-colors hover:text-blue-500"
+          >
+            Return to login
+          </Link>
+        </p>
       </div>
     </div>
   );

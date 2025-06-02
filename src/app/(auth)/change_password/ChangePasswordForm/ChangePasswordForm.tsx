@@ -92,10 +92,8 @@ export default function ChangePasswordForm() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-lg border bg-white p-8 shadow-lg">
-      <h2 className="mb-6 text-2xl font-semibold text-gray-800">
-        {translation?.lang["Change Password"]}
-      </h2>
+    <div className="space-y-6">
+      {/* Change Password Form */}
       <form action={mutate} className="space-y-6">
         <Input
           label={translation?.lang["New Password"] ?? "New Password"}
@@ -117,7 +115,7 @@ export default function ChangePasswordForm() {
         )}
 
         <PrimaryButton loading={isPending} className="w-full">
-          {translation?.lang["Change Password"]}
+          {translation?.lang["Change Password"] ?? "Change Password"}
         </PrimaryButton>
       </form>
     </div>
