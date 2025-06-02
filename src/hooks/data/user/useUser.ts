@@ -1,8 +1,8 @@
 "use client";
+
 import { useQuery } from "@tanstack/react-query";
-import { userQuery } from "./userQuery";
+import { userQueryOptions } from "./userQueryOptions";
 
 export default function useUser() {
-  const query = useQuery(userQuery());
-  return query;
+  return useQuery(userQueryOptions());
 }

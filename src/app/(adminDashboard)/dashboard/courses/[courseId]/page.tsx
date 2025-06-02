@@ -18,6 +18,16 @@ import useCourse from "@/hooks/data/courses/useCourse";
 import { useToast } from "@/hooks/useToast";
 import useBooks from "@/hooks/data/books/useBooks";
 import useAssignBooksToCourse from "@/hooks/data/books/useAssignBooksToCourse";
+import {
+  ArrowLeft,
+  Loader2,
+  BookOpen,
+  Plus,
+  AlertTriangle,
+  Search,
+  Edit,
+  Trash2,
+} from "lucide-react";
 
 // shadcn components
 import { Button } from "@/components/shadcn-components/button";
@@ -528,7 +538,7 @@ export default function EditCoursePage() {
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+              <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-blue-600" />
               <p className="text-gray-600">Loading course...</p>
             </div>
           </div>
@@ -561,19 +571,7 @@ export default function EditCoursePage() {
             onClick={() => router.back()}
             className="mb-4"
           >
-            <svg
-              className="mr-2 h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ArrowLeft className="mr-2 h-5 w-5" />
             Back to Courses
           </Button>
           <h1 className="text-3xl font-bold text-gray-900">📚 Edit Course</h1>
@@ -706,7 +704,10 @@ export default function EditCoursePage() {
               <CardContent className="p-6">
                 <div className="mb-6 flex items-center justify-between">
                   <CardTitle>Course Content</CardTitle>
-                  <Button onClick={addNewChapter}>Add Chapter</Button>
+                  <Button onClick={addNewChapter}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Chapter
+                  </Button>
                 </div>
 
                 <div className="space-y-6">
@@ -722,6 +723,7 @@ export default function EditCoursePage() {
                             size="sm"
                             onClick={() => removeChapter(chapter.id)}
                           >
+                            <Trash2 className="mr-2 h-4 w-4" />
                             Delete Chapter
                           </Button>
                         </div>
@@ -784,6 +786,7 @@ export default function EditCoursePage() {
                               size="sm"
                               onClick={() => addNewLesson(chapter.id)}
                             >
+                              <Plus className="mr-2 h-4 w-4" />
                               Add Lesson
                             </Button>
                           </div>
@@ -804,6 +807,7 @@ export default function EditCoursePage() {
                                       size="sm"
                                       onClick={() => removeLesson(lesson.id)}
                                     >
+                                      <Trash2 className="mr-2 h-4 w-4" />
                                       Delete
                                     </Button>
                                   </div>
@@ -1024,19 +1028,7 @@ export default function EditCoursePage() {
                                     />
                                   ) : (
                                     <div className="flex h-full w-full items-center justify-center">
-                                      <svg
-                                        className="h-6 w-6 text-gray-400"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={1}
-                                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                                        />
-                                      </svg>
+                                      <BookOpen className="h-6 w-6 text-gray-400" />
                                     </div>
                                   )}
                                 </div>
@@ -1079,19 +1071,7 @@ export default function EditCoursePage() {
                           ))
                         ) : (
                           <div className="py-8 text-center">
-                            <svg
-                              className="mx-auto h-12 w-12 text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1}
-                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                              />
-                            </svg>
+                            <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
                             <h3 className="mt-2 text-sm font-medium text-gray-900">
                               No books assigned
                             </h3>
@@ -1104,19 +1084,7 @@ export default function EditCoursePage() {
                                 size="sm"
                                 onClick={() => setIsAssignBooksOpen(true)}
                               >
-                                <svg
-                                  className="mr-2 h-4 w-4"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                  />
-                                </svg>
+                                <Plus className="mr-2 h-4 w-4" />
                                 Assign Books
                               </Button>
                             </div>
@@ -1132,35 +1100,11 @@ export default function EditCoursePage() {
                             size="sm"
                             onClick={() => setIsAssignBooksOpen(true)}
                           >
-                            <svg
-                              className="mr-2 h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                              />
-                            </svg>
+                            <Plus className="mr-2 h-4 w-4" />
                             Add More Books
                           </Button>
                           <Button variant="outline" size="sm">
-                            <svg
-                              className="mr-2 h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
+                            <Edit className="mr-2 h-4 w-4" />
                             Manage Books
                           </Button>
                         </div>
@@ -1281,24 +1225,12 @@ export default function EditCoursePage() {
               <div className="max-h-96 space-y-2 overflow-y-auto">
                 {isBooksLoading ? (
                   <div className="py-8 text-center">
-                    <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                    <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-blue-600" />
                     <p className="text-sm text-gray-600">Loading books...</p>
                   </div>
                 ) : booksError ? (
                   <div className="py-8 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-red-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                      />
-                    </svg>
+                    <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">
                       Error loading books
                     </h3>
@@ -1331,19 +1263,7 @@ export default function EditCoursePage() {
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center">
-                            <svg
-                              className="h-6 w-6 text-gray-400"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1}
-                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                              />
-                            </svg>
+                            <BookOpen className="h-6 w-6 text-gray-400" />
                           </div>
                         )}
                       </div>
@@ -1379,19 +1299,7 @@ export default function EditCoursePage() {
                   ))
                 ) : (
                   <div className="py-8 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
+                    <Search className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">
                       No books found
                     </h3>

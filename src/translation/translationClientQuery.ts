@@ -15,7 +15,6 @@ export const translationClientQuery = () => {
   return {
     queryKey: ["lang", locale],
     queryFn: async () => {
-      console.log("🚀 ~ translationClientQuery ~ locale:", locale);
       const langRes = await getTranslation(locale as ILanguages);
       return langRes;
     },
