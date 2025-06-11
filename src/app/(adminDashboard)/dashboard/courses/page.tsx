@@ -92,24 +92,6 @@ export default function AdminCoursesPage() {
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="rounded-lg bg-purple-100 p-2">
-                    <Key className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">
-                      With Access Code
-                    </p>
-                    <p className="text-2xl font-semibold text-gray-900">
-                      {courses.filter((c) => (c as any).access_code).length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         )}
 

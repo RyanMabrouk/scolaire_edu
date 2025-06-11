@@ -408,7 +408,7 @@ export default function BooksManagementPage() {
             />
             <Select
               value={statusFilter}
-              onValueChange={(value: any) => setStatusFilter(value)}
+              onValueChange={(value) => setStatusFilter(value as any)}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue />

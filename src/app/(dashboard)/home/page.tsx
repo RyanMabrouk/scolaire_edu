@@ -145,9 +145,15 @@ export default function HomePage() {
   );
 }
 
-function CourseCard({ course }: { course: any }) {
+function CourseCard({
+  course,
+}: {
+  course: NonNullable<
+    NonNullable<ReturnType<typeof useUserCourses>>["data"]
+  >["data"][number];
+}) {
   const totalLessons = (course.chapters || []).reduce(
-    (total: number, chapter: any) => total + (chapter.lessons || []).length,
+    (total: number, chapter) => total + (chapter.lessons || []).length,
     0,
   );
 

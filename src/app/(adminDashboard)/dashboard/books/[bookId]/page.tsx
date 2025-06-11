@@ -736,7 +736,7 @@ export default function BookDetailsPage() {
                   <div className="space-y-6">
                     {book.course_books.map((courseBook) => (
                       <div
-                        key={courseBook.course.id}
+                        key={courseBook.courses.id}
                         className="rounded-lg border border-gray-200 p-4"
                       >
                         <div className="mb-4 flex items-center justify-between">
@@ -758,17 +758,17 @@ export default function BookDetailsPage() {
                             </div>
                             <div>
                               <h4 className="font-medium text-gray-900">
-                                {courseBook.course.title}
+                                {courseBook.courses.title}
                               </h4>
                               <Badge
                                 variant={
-                                  courseBook.course.is_published
+                                  courseBook.courses.is_published
                                     ? "default"
                                     : "secondary"
                                 }
                                 className="mt-1"
                               >
-                                {courseBook.course.is_published
+                                {courseBook.courses.is_published
                                   ? "Published"
                                   : "Draft"}
                               </Badge>
@@ -779,7 +779,7 @@ export default function BookDetailsPage() {
                             size="sm"
                             onClick={() =>
                               router.push(
-                                `/dashboard/courses/${courseBook.course.id}`,
+                                `/dashboard/courses/${courseBook.courses.id}`,
                               )
                             }
                           >
@@ -788,14 +788,14 @@ export default function BookDetailsPage() {
                         </div>
 
                         {/* Course Lessons */}
-                        {(courseBook.course as any).chapters && (
+                        {courseBook.courses.chapters && (
                           <div className="mt-4 border-t border-gray-100 pt-4">
                             <h5 className="mb-3 text-sm font-medium text-gray-700">
                               Course Content
                             </h5>
                             <div className="space-y-3">
-                              {(courseBook.course as any).chapters.map(
-                                (chapter: any, chapterIndex: number) => (
+                              {courseBook.courses.chapters.map(
+                                (chapter, chapterIndex: number) => (
                                   <div key={chapter.id} className="space-y-2">
                                     <h6 className="text-sm font-medium text-gray-600">
                                       Chapter {chapterIndex + 1}:{" "}
@@ -805,10 +805,7 @@ export default function BookDetailsPage() {
                                       chapter.lessons.length > 0 && (
                                         <div className="ml-4 space-y-2">
                                           {chapter.lessons.map(
-                                            (
-                                              lesson: any,
-                                              lessonIndex: number,
-                                            ) => (
+                                            (lesson, lessonIndex: number) => (
                                               <div
                                                 key={lesson.id}
                                                 className="flex items-center justify-between rounded border border-gray-100 bg-gray-50 p-2"
@@ -872,7 +869,7 @@ export default function BookDetailsPage() {
                                                             "a",
                                                           );
                                                         link.href =
-                                                          lesson.pdf_url;
+                                                          lesson.pdf_url || "";
                                                         link.download = `${lesson.title}.pdf`;
                                                         link.target = "_blank";
                                                         document.body.appendChild(

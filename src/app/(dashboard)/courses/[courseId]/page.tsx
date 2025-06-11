@@ -207,7 +207,7 @@ export default function CoursePage({ params }: CoursePageProps) {
 
           {/* Right Panel - Course Content */}
           <div className="lg:col-span-2">
-            <CourseContent course={course as any} userAccess={userAccess} />
+            <CourseContent course={course} userAccess={userAccess} />
           </div>
         </div>
       </div>
@@ -219,7 +219,7 @@ function CourseOverview({
   course,
   userAccess,
 }: {
-  course: any;
+  course?: NonNullable<ReturnType<typeof useCourse>["data"]>["data"];
   userAccess: {
     hasAccess: boolean;
     accessType?: "code" | "assigned";
@@ -228,8 +228,8 @@ function CourseOverview({
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const totalLessons = (course.chapters || []).reduce(
-    (total: number, chapter: any) => total + chapter.lessons.length,
+  const totalLessons = (course?.chapters || []).reduce(
+    (total: number, chapter) => total + chapter.lessons.length,
     0,
   );
 
@@ -244,7 +244,7 @@ function CourseOverview({
           <div className="flex items-center justify-between">
             <span className="text-gray-600">Chapters:</span>
             <span className="font-semibold text-gray-900">
-              {(course.chapters || []).length}
+              {(course?.chapters || []).length}
             </span>
           </div>
 
@@ -303,7 +303,7 @@ function CourseOverview({
         <div className="border-t pt-4">
           <h3 className="mb-3 font-semibold text-gray-900">Course Content</h3>
           <div className="space-y-2">
-            {(course.chapters || []).map((chapter: any, index: number) => (
+            {(course?.chapters || []).map((chapter, index) => (
               <Card key={chapter.id} className="border-gray-200">
                 <CardContent className="p-3">
                   <h4 className="font-medium text-gray-900">
@@ -314,74 +314,62 @@ function CourseOverview({
                     {chapter.lessons.length !== 1 ? "s" : ""}
                   </p>
 
-                  {/* Show PDF lessons for accessible courses */}
-                  {userAccess.hasAccess &&
-                    chapter.lessons &&
-                    chapter.lessons.some(
-                      (lesson: any) =>
-                        lesson.lesson_type === "pdf" && lesson.pdf_url,
-                    ) && (
-                      <div className="mt-2 space-y-1">
-                        {chapter.lessons
-                          .filter(
-                            (lesson: any) =>
-                              lesson.lesson_type === "pdf" && lesson.pdf_url,
-                          )
-                          .map((lesson: any, lessonIndex: number) => (
-                            <div
-                              key={lesson.id}
-                              className="flex items-center justify-between text-xs"
+                  {/* Show lesson types for accessible courses */}
+                  {userAccess.hasAccess && chapter.lessons && (
+                    <div className="mt-2 space-y-1">
+                      {chapter.lessons.map((lesson, lessonIndex: number) => (
+                        <div
+                          key={lesson.id}
+                          className="flex items-center text-xs text-gray-600"
+                        >
+                          {lesson.lesson_type === "pdf" ? (
+                            <svg
+                              className="mr-1 h-3 w-3 text-red-500"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
                             >
-                              <span className="flex items-center text-gray-600">
-                                <svg
-                                  className="mr-1 h-3 w-3 text-red-500"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                  />
-                                </svg>
-                                {lesson.title}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  const link = document.createElement("a");
-                                  link.href = lesson.pdf_url;
-                                  link.download = `${lesson.title || "lesson"}.pdf`;
-                                  link.target = "_blank";
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                  toast.success("PDF download started!");
-                                }}
-                                className="h-6 px-2 text-xs"
-                              >
-                                <svg
-                                  className="mr-1 h-2 w-2"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                  />
-                                </svg>
-                                PDF
-                              </Button>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                              />
+                            </svg>
+                          ) : lesson.lesson_type === "video" ? (
+                            <svg
+                              className="mr-1 h-3 w-3 text-blue-500"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15M9 10V9a2 2 0 012-2h2a2 2 0 012 2v1M9 10v5a2 2 0 002 2h2a2 2 0 002-2v-5"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              className="mr-1 h-3 w-3 text-gray-500"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                          )}
+                          <span>{lesson.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

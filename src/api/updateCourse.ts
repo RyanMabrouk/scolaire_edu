@@ -28,7 +28,13 @@ export default async function updateCourse(
     return { data: null, error: "Admin access required" };
   }
 
-  const updateData: any = {
+  const updateData: {
+    title?: string;
+    description?: string | null;
+    cover_image_url?: string | null;
+    is_published?: boolean;
+    updated_at?: string;
+  } = {
     updated_at: new Date().toISOString(),
   };
 

@@ -112,9 +112,15 @@ export async function getBook(bookId: string) {
     .select(
       `
       *,
-      course_books (
+      course_books(
         *,
-        course:courses (*)
+        courses(
+          *,
+          chapters(
+            *,
+            lessons(*)
+          )
+        )
       )
     `,
     )

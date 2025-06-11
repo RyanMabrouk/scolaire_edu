@@ -26,66 +26,11 @@ export default function PDFViewer({
     setError("Failed to load PDF. Please try again.");
   };
 
-  const openInNewTab = () => {
-    window.open(pdfUrl, "_blank");
-  };
-
-  const downloadPDF = () => {
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.download = `${title}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <div className={`overflow-hidden rounded-lg bg-gray-100 ${className}`}>
-      {/* PDF Controls */}
+      {/* PDF Header */}
       <div className="border-b border-gray-200 bg-white px-4 py-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium text-gray-900">{title}</h3>
-          <div className="flex space-x-2">
-            <button
-              onClick={openInNewTab}
-              className="rounded bg-blue-600 px-3 py-1 text-sm text-white transition-colors hover:bg-blue-700"
-              title="Open in new tab"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                />
-              </svg>
-            </button>
-            <button
-              onClick={downloadPDF}
-              className="rounded bg-gray-600 px-3 py-1 text-sm text-white transition-colors hover:bg-gray-700"
-              title="Download PDF"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <h3 className="font-medium text-gray-900">{title}</h3>
       </div>
 
       {/* PDF Viewer */}
@@ -120,26 +65,12 @@ export default function PDFViewer({
               <h3 className="mb-2 text-lg font-medium text-gray-900">
                 PDF Error
               </h3>
-              <p className="mb-4 text-gray-600">{error}</p>
-              <div className="space-x-3">
-                <button
-                  onClick={openInNewTab}
-                  className="rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
-                >
-                  Open in New Tab
-                </button>
-                <button
-                  onClick={downloadPDF}
-                  className="rounded-md bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
-                >
-                  Download PDF
-                </button>
-              </div>
+              <p className="text-gray-600">{error}</p>
             </div>
           </div>
         ) : (
           <iframe
-            src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1`}
             className="h-full w-full border-0"
             style={{ minHeight: "600px" }}
             onLoad={handleLoad}

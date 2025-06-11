@@ -9,6 +9,9 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const { data: user } = await getProfile();
+  if (!user) {
+    redirect("/login");
+  }
   if (user?.is_admin) {
     redirect("/dashboard");
   }

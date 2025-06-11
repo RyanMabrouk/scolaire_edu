@@ -173,13 +173,13 @@ export default function EditCoursePage() {
       // Set chapters data
       if (course.chapters) {
         setChapters(
-          course.chapters.map((chapter: any) => ({
+          course.chapters.map((chapter) => ({
             id: chapter.id,
             title: chapter.title || "",
             description: chapter.description || "",
             order_index: chapter.order_index || 0,
             lessons:
-              chapter.lessons?.map((lesson: any) => ({
+              chapter.lessons?.map((lesson) => ({
                 id: lesson.id,
                 title: lesson.title || "",
                 description: lesson.description || "",
@@ -886,12 +886,10 @@ export default function EditCoursePage() {
                                         </label>
                                         <div className="mt-1">
                                           <VideoUpload
-                                            onUploadComplete={(
-                                              videoId: string,
-                                            ) =>
+                                            onUploadComplete={(result) =>
                                               handleVideoUploadComplete(
                                                 lesson.id,
-                                                videoId,
+                                                result.uploadJobId,
                                               )
                                             }
                                             onUploadError={(error: string) => {
@@ -1011,7 +1009,7 @@ export default function EditCoursePage() {
                       {/* Books List */}
                       <div className="space-y-3">
                         {course.books && course.books.length > 0 ? (
-                          course.books.map((book: any, index: number) => (
+                          course.books.map((book, index) => (
                             <div
                               key={book.id || index}
                               className="flex items-center justify-between rounded-lg border border-gray-200 p-3"

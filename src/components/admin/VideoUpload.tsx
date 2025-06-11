@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
-import axios, { AxiosResponse, isAxiosError } from "axios";
-import crypto from "crypto";
+import axios from "axios";
+import CryptoJS from "crypto-js";
 
 // Type definitions
 interface InitUploadRequest {
@@ -8,22 +8,10 @@ interface InitUploadRequest {
   fileSize: number;
   title: string;
   description: string;
-  tags?: string[];
 }
 
 interface InitUploadResponse {
   uploadJobId: string;
-}
-
-interface UploadStateResponse {
-  uploadJobId: string;
-  totalChunks?: {
-    [key: string]: string;
-  };
-}
-
-interface SessionResponse {
-  urlToEdge: string;
 }
 
 interface UploadProgressCallback {
@@ -32,309 +20,342 @@ interface UploadProgressCallback {
     totalChunks: number;
     percentage: number;
     uploadJobId: string;
+    totalBytesUploaded: number;
   }): void;
 }
 
 interface BMDRMUploadOptions {
   apiKey: string;
-  file: File | Buffer;
+  file: File;
   title: string;
   description: string;
-  tags?: string[];
-  chunkSize?: number; // Default 10MB
   onProgress?: UploadProgressCallback;
 }
 
+interface BMDRMUploadResult {
+  url: string;
+  duration?: number;
+  uploadJobId: string;
+  success: boolean;
+  message: string;
+}
+
 class BMDRMUploader {
-  private readonly baseUrl = "https://uploads.bmdrm.com/api/public/fileupload";
-  private readonly sessionUrl = "https://edge-lb.video-crypt.com/api/Sessions";
+  private readonly bmdrmUploadUrl = "https://uploads.bmdrm.com/api";
+  private readonly bmdrmGetVideoUrl = "https://edge-lb.video-crypt.com/api";
+  private readonly CHUNK_SIZE_IN_BYTES = 2 * 1024 * 1024; // 2MB to match server
 
   /**
-   * Calculate MD5 hash of a chunk
+   * Calculate MD5 hash using CryptoJS (matching server implementation)
    */
-  private calculateHash(chunk: Buffer): string {
-    return crypto.createHash("md5").update(chunk).digest("hex");
+  private computeMD5(chunk: Buffer): string {
+    const wordArray = CryptoJS.lib.WordArray.create(chunk);
+    return CryptoJS.MD5(wordArray).toString();
   }
 
   /**
-   * Split file into chunks
+   * Delay utility for retry logic
    */
-  private async splitFileIntoChunks(
-    file: File | Buffer,
-    chunkSize: number,
-  ): Promise<Buffer[]> {
-    const chunks: Buffer[] = [];
-    let buffer: Buffer;
-
-    if (file instanceof File) {
-      buffer = Buffer.from(await file.arrayBuffer());
-    } else {
-      buffer = file;
-    }
-
-    for (let i = 0; i < buffer.length; i += chunkSize) {
-      const chunk = buffer.slice(i, i + chunkSize);
-      chunks.push(chunk);
-    }
-
-    return chunks;
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
-   * Initialize upload session
+   * Initialize upload session (matching server implementation)
    */
   private async initializeUpload(
     apiKey: string,
-    totalChunks: number,
-    fileSize: number,
-    title: string,
-    description: string,
-    tags?: string[],
-  ): Promise<string> {
-    const requestData: InitUploadRequest = {
-      totalChunks,
-      fileSize,
-      title,
-      description,
-      tags,
-    };
-
+    payload: {
+      totalChunks: number;
+      fileSize: number;
+      title: string;
+      description: string;
+    },
+  ): Promise<{ uploadJobId?: string }> {
     try {
-      const response: AxiosResponse<InitUploadResponse> = await axios.post(
-        `${this.baseUrl}/Init`,
-        requestData,
-        {
+      const headers = {
+        "Content-Type": "application/json",
+        "API-KEY": apiKey,
+      };
+
+      const initUploadUrl = `${this.bmdrmUploadUrl}/public/fileupload/Init`;
+
+      const response = await fetch(initUploadUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Request failed with status: ${response.status}, response: ${errorText}`,
+        );
+      }
+
+      if (response.headers.get("Content-Length") === "0") {
+        return {};
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Failed to initialize BMDRM upload:", error);
+      throw new Error(`Failed to initialize BMDRM upload: ${error}`);
+    }
+  }
+
+  /**
+   * Upload a single chunk with retry logic (matching server implementation)
+   */
+  private async uploadChunk(
+    uploadJobId: string,
+    chunkNumber: number,
+    chunk: Buffer,
+    apiKey: string,
+  ): Promise<boolean> {
+    const hash = this.computeMD5(chunk);
+    const uploadChunkUrl = `${this.bmdrmUploadUrl}/public/fileupload/Upload?chunkNumber=${chunkNumber}&uploadJobId=${uploadJobId}&hash=${hash}`;
+
+    const formData = new FormData();
+    const blob = new Blob([new Uint8Array(chunk)]);
+    formData.append("chunkFile", blob, `chunk_${chunkNumber}.part`);
+
+    const maxRetries = 5;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(uploadChunkUrl, {
+          method: "POST",
           headers: {
-            accept: "text/plain",
             "API-KEY": apiKey,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return true;
+      } catch (error) {
+        if ((error as Error).message.includes("408") && attempt < maxRetries) {
+          const retryDelay = 1000 * Math.pow(2, attempt - 1);
+          await this.delay(retryDelay);
+        } else {
+          console.error("Error during chunk upload:", error);
+          if (attempt === maxRetries) {
+            throw error;
+          }
+        }
+      }
+    }
+
+    throw new Error("Max retries exceeded for chunk upload");
+  }
+
+  /**
+   * Get video link from BMDRM (matching server implementation)
+   */
+  private async getVideoLinkFromBmdrm(
+    videoId: string,
+    userId: string,
+    apiKey: string,
+  ): Promise<string> {
+    try {
+      const response = await fetch(
+        `${this.bmdrmGetVideoUrl}/Sessions?videoId=${videoId}&userId=${userId}`,
+        {
+          method: "GET",
+          headers: {
+            apiKey: apiKey,
             "Content-Type": "application/json",
           },
         },
       );
 
-      return response.data.uploadJobId;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.log(
-        "🚀 ~ BMDRMUploader ~ error:",
-        isAxiosError(error) ? error.response?.data : error,
-      );
-      throw new Error(`Failed to initialize upload: ${error}`);
+      console.error("Error during getting BMDRM video link:", error);
+      throw new Error(`Error during getting BMDRM video link: ${error}`);
     }
   }
 
   /**
-   * Upload a single chunk
+   * Process file in chunks similar to server stream processing
    */
-  private async uploadChunk(
-    apiKey: string,
-    uploadJobId: string,
-    chunkNumber: number,
-    chunk: Buffer,
-    hash: string,
-  ): Promise<void> {
-    const formData = new FormData();
-    const blob = new Blob([new Uint8Array(chunk)]);
-    formData.append("chunkFile", blob);
+  private async processFileInChunks(
+    file: File,
+    chunkSize: number,
+    onChunkProcessed: (chunk: Buffer, chunkNumber: number) => Promise<void>,
+  ): Promise<Buffer[]> {
+    const chunks: Buffer[] = [];
+    let chunkNumber = 1;
+    let offset = 0;
 
-    try {
-      await axios.post(`${this.baseUrl}/Upload`, formData, {
-        params: {
-          chunkNumber,
-          hash,
-          uploadJobId,
-        },
-        headers: {
-          accept: "*/*",
-          "API-KEY": apiKey,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-    } catch (error) {
-      throw new Error(`Failed to upload chunk ${chunkNumber}: ${error}`);
+    // Store all chunks for duration calculation (like server implementation)
+    const allChunks: Buffer[] = [];
+
+    while (offset < file.size) {
+      const chunkEnd = Math.min(offset + chunkSize, file.size);
+      const fileSlice = file.slice(offset, chunkEnd);
+      const arrayBuffer = await fileSlice.arrayBuffer();
+      const chunkBuffer = Buffer.from(arrayBuffer);
+
+      allChunks.push(chunkBuffer);
+      await onChunkProcessed(chunkBuffer, chunkNumber);
+
+      offset = chunkEnd;
+      chunkNumber++;
     }
+
+    return allChunks;
   }
 
   /**
-   * Check upload state/progress
+   * Main upload function matching server implementation pattern
    */
-  private async checkUploadState(
-    apiKey: string,
-    uploadJobId: string,
-  ): Promise<UploadStateResponse> {
-    try {
-      const response: AxiosResponse<UploadStateResponse> = await axios.get(
-        `${this.baseUrl}/State`,
-        {
-          params: { uploadJobId },
-          headers: {
-            accept: "text/plain",
-            "API-KEY": apiKey,
-          },
-        },
-      );
-
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to check upload state: ${error}`);
-    }
-  }
-
-  /**
-   * Finalize upload (clear endpoint)
-   */
-  private async finalizeUpload(
-    apiKey: string,
-    uploadJobId: string,
-  ): Promise<void> {
-    try {
-      await axios.post(
-        `${this.baseUrl}/Clear`,
-        {},
-        {
-          params: { uploadJobId },
-          headers: {
-            accept: "*/*",
-            "API-KEY": apiKey,
-          },
-        },
-      );
-    } catch (error) {
-      throw new Error(`Failed to finalize upload: ${error}`);
-    }
-  }
-
-  /**
-   * Retrieve video session for playback
-   */
-  async getVideoSession(
-    apiKey: string,
-    videoId: string,
-    userId: string,
-  ): Promise<string> {
-    try {
-      const response: AxiosResponse<SessionResponse> = await axios.get(
-        this.sessionUrl,
-        {
-          params: { videoId, userId },
-          headers: {
-            accept: "text/plain",
-            apiKey: apiKey,
-          },
-        },
-      );
-
-      return response.data.urlToEdge;
-    } catch (error) {
-      throw new Error(`Failed to retrieve video session: ${error}`);
-    }
-  }
-
-  /**
-   * Main upload function
-   */
-  async uploadFile(options: BMDRMUploadOptions): Promise<{
-    uploadJobId: string;
-    success: boolean;
-    message: string;
-  }> {
-    const {
-      apiKey,
-      file,
-      title,
-      description,
-      tags,
-      chunkSize = 10 * 1024 * 1024, // 10MB default
-      onProgress,
-    } = options;
+  async uploadFile(options: BMDRMUploadOptions): Promise<BMDRMUploadResult> {
+    const { apiKey, file, title, description, onProgress } = options;
 
     try {
-      // Get file size
-      const fileSize = file instanceof File ? file.size : file.length;
-
-      // Multi-chunk upload for larger files
-      const chunks = await this.splitFileIntoChunks(file, chunkSize);
-      const totalChunks = chunks.length;
+      const fileSize = file.size;
+      const totalChunks = Math.ceil(fileSize / this.CHUNK_SIZE_IN_BYTES);
 
       // Initialize upload
-      const uploadJobId = await this.initializeUpload(
-        apiKey,
+      const response = await this.initializeUpload(apiKey, {
         totalChunks,
         fileSize,
         title,
         description,
-        tags,
-      );
+      });
 
-      // Upload chunks
-      for (let i = 0; i < chunks.length; i++) {
-        const chunkNumber = i + 1;
-        const chunk = chunks[i];
-        const hash = this.calculateHash(chunk);
-
-        await this.uploadChunk(apiKey, uploadJobId, chunkNumber, chunk, hash);
-
-        // Report progress
-        if (onProgress) {
-          onProgress({
-            chunkNumber,
-            totalChunks,
-            percentage: Math.round((chunkNumber / totalChunks) * 100),
-            uploadJobId,
-          });
-        }
-
-        // Optional: Check state after each chunk
-        await this.checkUploadState(apiKey, uploadJobId);
+      if (!response.uploadJobId) {
+        throw new Error("Failed to initialize BMDRM upload");
       }
 
-      // Finalize upload
-      await this.finalizeUpload(apiKey, uploadJobId);
+      let totalBytesUploaded = 0;
+      const accumulatedChunksForDuration: Buffer[] = [];
+
+      // Process file in chunks (similar to server stream processing)
+      await this.processFileInChunks(
+        file,
+        this.CHUNK_SIZE_IN_BYTES,
+        async (chunkBuffer: Buffer, chunkNumber: number) => {
+          // Upload chunk
+          await this.uploadChunk(
+            response.uploadJobId!,
+            chunkNumber,
+            chunkBuffer,
+            apiKey,
+          );
+
+          // Track progress
+          totalBytesUploaded += chunkBuffer.length;
+          const progress = Math.round((totalBytesUploaded / fileSize) * 100);
+
+          // Store chunk for duration calculation
+          accumulatedChunksForDuration.push(chunkBuffer);
+
+          // Report progress
+          if (onProgress) {
+            onProgress({
+              chunkNumber,
+              totalChunks,
+              percentage: progress,
+              uploadJobId: response.uploadJobId!,
+              totalBytesUploaded,
+            });
+          }
+        },
+      );
+
+      // Get video link (using a dummy userId for now - in real app this should come from auth)
+      const userId = "user-" + Date.now(); // This should be the actual authenticated user ID
+      const url = await this.getVideoLinkFromBmdrm(
+        response.uploadJobId!,
+        userId,
+        apiKey,
+      );
+
+      // Note: Duration calculation would require additional video processing libraries
+      // For now, we'll skip it as it's complex in browser environment
 
       return {
-        uploadJobId,
+        url,
+        uploadJobId: response.uploadJobId!,
         success: true,
         message: "File uploaded successfully",
       };
     } catch (error) {
+      console.error("Upload failed:", error);
       throw new Error(`Upload failed: ${error}`);
+    }
+  }
+
+  /**
+   * Get video information from BMDRM
+   */
+  async getVideoInfos(apiKey: string, videoId: string) {
+    try {
+      const response = await axios.get(
+        `https://app.bmdrm.com/api/PublicVideos/${videoId}`,
+        {
+          headers: {
+            "API-KEY": apiKey,
+          },
+        },
+      );
+
+      return response?.data;
+    } catch (error) {
+      console.error("Error during getting BMDRM video infos:", error);
+      throw new Error(`Error during getting BMDRM video infos: ${error}`);
+    }
+  }
+
+  /**
+   * Delete video from BMDRM
+   */
+  async deleteVideo(apiKey: string, videoId: string) {
+    try {
+      const response = await axios.delete(
+        `${this.bmdrmUploadUrl}/PublicVideos`,
+        {
+          params: {
+            id: videoId,
+          },
+          headers: {
+            "API-KEY": apiKey,
+          },
+        },
+      );
+      return response?.data;
+    } catch (error) {
+      console.error("Error deleting video from BMDRM:", error);
+      throw new Error(`Error deleting video: ${error}`);
     }
   }
 }
 
-// Usage example
+// Usage function
 export async function uploadToBMDRM(options: BMDRMUploadOptions) {
   const uploader = new BMDRMUploader();
   return await uploader.uploadFile(options);
 }
 
-// Example usage:
-/*
-const file = document.getElementById('fileInput').files[0]; // or Buffer for Node.js
-const result = await uploadToBMDRM({
-  apiKey: '123e4567-e89b-12d3-a456-426614174000',
-  file: file,
-  title: 'My Video',
-  description: 'Video description',
-  tags: ['3fa85f64-5717-4562-b3fc-2c963f66afa6'],
-  onProgress: (progress) => {
-    console.log(`Upload progress: ${progress.percentage}% (${progress.chunkNumber}/${progress.totalChunks})`);
-  }
-});
-
-console.log('Upload result:', result);
-*/
-
 export { BMDRMUploader };
-export type { BMDRMUploadOptions, UploadProgressCallback };
+export type { BMDRMUploadOptions, UploadProgressCallback, BMDRMUploadResult };
 
 // React component for video upload
 
 interface VideoUploadProps {
-  onUploadComplete: (videoId: string) => void;
+  onUploadComplete: (result: BMDRMUploadResult) => void;
   onUploadError: (error: string) => void;
   title: string;
   description?: string;
-  tags?: string[];
 }
 
 interface UploadProgress {
@@ -342,6 +363,7 @@ interface UploadProgress {
   totalChunks: number;
   percentage: number;
   uploadJobId: string;
+  totalBytesUploaded: number;
 }
 
 const VideoUpload: React.FC<VideoUploadProps> = ({
@@ -349,7 +371,6 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
   onUploadError,
   title,
   description = "",
-  tags = [],
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(
@@ -364,7 +385,7 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file type
+      // Validate file type (only video files)
       if (!file.type.startsWith("video/")) {
         onUploadError("Please select a valid video file");
         return;
@@ -395,14 +416,13 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
         file: selectedFile,
         title,
         description,
-        tags,
         onProgress: (progress) => {
           setUploadProgress(progress);
         },
       });
 
       if (result.success) {
-        onUploadComplete(result.uploadJobId);
+        onUploadComplete(result);
         setSelectedFile(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
@@ -424,6 +444,10 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const formatBytes = (bytes: number): string => {
+    return formatFileSize(bytes);
   };
 
   return (
@@ -486,9 +510,12 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
               style={{ width: `${uploadProgress.percentage}%` }}
             />
           </div>
-          <p className="text-xs text-gray-500">
-            Upload ID: {uploadProgress.uploadJobId}
-          </p>
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>Upload ID: {uploadProgress.uploadJobId}</span>
+            <span>
+              {formatBytes(uploadProgress.totalBytesUploaded)} uploaded
+            </span>
+          </div>
         </div>
       )}
 
@@ -510,10 +537,11 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-blue-800">
-                Uploading video...
+                Uploading video to BMDRM...
               </p>
               <p className="text-sm text-blue-600">
                 Please don't close this page while the upload is in progress.
+                Large files may take several minutes.
               </p>
             </div>
           </div>

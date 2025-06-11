@@ -228,7 +228,7 @@ export default function BookCopiesPage() {
           />
           <Select
             value={statusFilter}
-            onValueChange={(value: any) => setStatusFilter(value)}
+            onValueChange={(value) => setStatusFilter(value as any)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue />
@@ -289,7 +289,7 @@ export default function BookCopiesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="font-medium text-gray-900">
-                      {(copy as any).book?.title || "Unknown Book"}
+                      {copy.book?.title || "Unknown Book"}
                     </div>
                   </TableCell>
                   <TableCell>{copy.batch_number || "—"}</TableCell>

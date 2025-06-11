@@ -27,7 +27,13 @@ export default async function updateChapter(
     return { data: null, error: "Admin access required" };
   }
 
-  const updateData: any = {
+  const updateData: {
+    title?: string;
+    description?: string | null;
+    order_index?: number;
+    updated_at?: string;
+    video_url?: string;
+  } = {
     updated_at: new Date().toISOString(),
   };
 

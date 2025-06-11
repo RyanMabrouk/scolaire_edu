@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import signOut from "@/actions/auth/signout";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,8 +13,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
+      await signOut();
       router.push("/login");
     } catch (error) {
       console.error("Error logging out:", error);

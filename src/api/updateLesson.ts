@@ -31,7 +31,16 @@ export default async function updateLesson(
     return { data: null, error: "Admin access required" };
   }
 
-  const updateData: any = {
+  const updateData: {
+    title?: string;
+    description?: string | null;
+    lesson_type?: "bmdrm_video" | "pdf";
+    order_index?: number;
+    bmdrm_video_id?: string | null;
+    pdf_url?: string | null;
+    duration_minutes?: number;
+    updated_at?: string;
+  } = {
     updated_at: new Date().toISOString(),
   };
 

@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn-components/card";
+import { Book } from "@/types/books";
 
 export default function BooksPage() {
   const router = useRouter();
@@ -123,15 +124,21 @@ export default function BooksPage() {
   );
 }
 
-function BookCard({ book }: { book: any }) {
+function BookCard({
+  book,
+}: {
+  book: NonNullable<
+    NonNullable<ReturnType<typeof useUserBooks>>["data"]
+  >["data"][number];
+}) {
   const { toast } = useToast();
-  const associatedCourses = book.course_books || [];
+  const associatedCourses = book?.course_books || [];
 
   return (
     <Card className="h-full overflow-hidden transition-shadow duration-300 hover:shadow-lg">
       {/* Book Cover */}
       <div className="relative aspect-[3/4] overflow-hidden">
-        {book.cover_image_url ? (
+        {book?.cover_image_url ? (
           <Image
             src={book.cover_image_url}
             alt={book.title}
@@ -178,13 +185,13 @@ function BookCard({ book }: { book: any }) {
         </div>
 
         {/* Access Code in corner */}
-        {book.userCopy?.access_code && (
+        {book?.userCopy?.access_code && (
           <div className="absolute bottom-2 right-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                navigator.clipboard.writeText(book.userCopy.access_code);
+                navigator.clipboard.writeText(book.userCopy.access_code || "");
                 toast.success("Access code copied to clipboard!");
               }}
               className="h-6 bg-white/90 px-2 text-xs backdrop-blur-sm"
@@ -211,33 +218,33 @@ function BookCard({ book }: { book: any }) {
       {/* Book Info */}
       <CardContent className="p-4">
         <CardTitle className="mb-2 line-clamp-2 text-lg font-semibold">
-          {book.title}
+          {book?.title}
         </CardTitle>
 
-        {book.description && (
+        {book?.description && (
           <p className="mb-3 line-clamp-3 text-sm text-gray-600">
-            {book.description}
+            {book?.description}
           </p>
         )}
 
         {/* Book Details */}
         <div className="mb-3 space-y-1 text-xs text-gray-500">
-          {book.publisher && (
+          {book?.publisher && (
             <div className="flex items-center">
               <span className="font-medium">Publisher:</span>
-              <span className="ml-1">{book.publisher}</span>
+              <span className="ml-1">{book?.publisher}</span>
             </div>
           )}
-          {book.isbn && (
+          {book?.isbn && (
             <div className="flex items-center">
               <span className="font-medium">ISBN:</span>
-              <span className="ml-1">{book.isbn}</span>
+              <span className="ml-1">{book?.isbn}</span>
             </div>
           )}
-          {book.edition && (
+          {book?.edition && (
             <div className="flex items-center">
               <span className="font-medium">Edition:</span>
-              <span className="ml-1">{book.edition}</span>
+              <span className="ml-1">{book?.edition}</span>
             </div>
           )}
         </div>

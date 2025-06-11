@@ -42,6 +42,7 @@
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "crypto-js": "^4.2.0",
     "lucide-react": "^0.439.0",
     "next": "^14.2.29",
     "radix-ui": "^1.4.2",
@@ -57,6 +58,7 @@
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.74.7",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^20.17.50",
     "@types/react": "^18.3.22",
     "@types/react-dom": "^18.3.7",

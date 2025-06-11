@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { CourseWithChapters, LessonWithAttachments } from "@/types";
+import { LessonWithAttachments } from "@/types";
 import BMDRMVideoPlayer from "@/components/player/BMDRMVideoPlayer";
 import PDFViewer from "@/components/player/PDFViewer";
+import { useCourse } from "@/hooks/data/courses";
 
 interface CourseContentProps {
-  course: CourseWithChapters;
+  course?: NonNullable<ReturnType<typeof useCourse>["data"]>["data"];
   userAccess: {
     hasAccess: boolean;
     accessType?: "code" | "assigned";
@@ -177,7 +178,7 @@ export default function CourseContent({
         </div>
 
         <div className="divide-y divide-gray-200">
-          {course.chapters.map((chapter, chapterIndex) => (
+          {course?.chapters?.map((chapter, chapterIndex) => (
             <div key={chapter.id}>
               <button
                 onClick={() => toggleChapter(chapter.id)}
