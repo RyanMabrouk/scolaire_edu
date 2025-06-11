@@ -701,11 +701,11 @@ export default function NewCoursePage() {
                                       </label>
                                       <div className="mt-1">
                                         <VideoUpload
-                                          onUploadComplete={(videoId: string) =>
+                                          onUploadComplete={(result) =>
                                             handleVideoUploadComplete(
                                               chapter.id,
                                               lesson.id,
-                                              videoId,
+                                              result.uploadJobId,
                                             )
                                           }
                                           onUploadError={(error: string) => {
