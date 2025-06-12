@@ -8,8 +8,8 @@ export default async function updateLesson(
     description?: string;
     lesson_type?: "bmdrm_video" | "pdf";
     order_index?: number;
-    bmdrm_video_id?: string;
-    pdf_url?: string;
+    bmdrm_video_id?: string | null;
+    pdf_url?: string | null;
     duration_minutes?: number;
   },
 ) {

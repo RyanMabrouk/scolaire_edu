@@ -42,7 +42,7 @@ interface BMDRMUploadResult {
 
 class BMDRMUploader {
   private readonly bmdrmUploadUrl = "https://uploads.bmdrm.com/api";
-  private readonly bmdrmGetVideoUrl = "https://edge-lb.video-crypt.com/api";
+  private readonly bmdrmGetVideoUrl = "https://cdn-lb.video-crypt.com/api";
   private readonly CHUNK_SIZE_IN_BYTES = 2 * 1024 * 1024; // 2MB to match server
 
   /**
@@ -152,22 +152,25 @@ class BMDRMUploader {
   }
 
   /**
-   * Get video link from BMDRM (matching server implementation)
+   * Get video session from BMDRM for playback
    */
-  private async getVideoLinkFromBmdrm(
+  async getVideoSession(
     videoId: string,
     userId: string,
     apiKey: string,
   ): Promise<string> {
     try {
       const response = await fetch(
-        `${this.bmdrmGetVideoUrl}/Sessions?videoId=${videoId}&userId=${userId}`,
+        `${this.bmdrmGetVideoUrl}/Sessions?videoId=${videoId}`,
         {
           method: "GET",
           headers: {
             apiKey: apiKey,
             "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": "true",
           },
+          credentials: "include",
         },
       );
 
@@ -176,10 +179,10 @@ class BMDRMUploader {
       }
 
       const data = await response.json();
-      return data;
+      return data.urlToEdge || data.url || data;
     } catch (error) {
-      console.error("Error during getting BMDRM video link:", error);
-      throw new Error(`Error during getting BMDRM video link: ${error}`);
+      console.error("Error during getting BMDRM video session:", error);
+      throw new Error(`Error during getting BMDRM video session: ${error}`);
     }
   }
 
@@ -272,22 +275,14 @@ class BMDRMUploader {
         },
       );
 
-      // Get video link (using a dummy userId for now - in real app this should come from auth)
-      const userId = "user-" + Date.now(); // This should be the actual authenticated user ID
-      const url = await this.getVideoLinkFromBmdrm(
-        response.uploadJobId!,
-        userId,
-        apiKey,
-      );
-
-      // Note: Duration calculation would require additional video processing libraries
-      // For now, we'll skip it as it's complex in browser environment
+      // Don't get video link immediately - BMDRM needs processing time
+      // The video URL will be retrieved later when needed for playback
 
       return {
-        url,
+        url: "", // Empty URL since video is still processing
         uploadJobId: response.uploadJobId!,
         success: true,
-        message: "File uploaded successfully",
+        message: "File uploaded successfully - video is processing",
       };
     } catch (error) {
       console.error("Upload failed:", error);

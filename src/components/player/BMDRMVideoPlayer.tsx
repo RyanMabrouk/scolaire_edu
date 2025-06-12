@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { BMDRMSessionResponse } from "@/types";
+import { BMDRMUploader } from "@/components/admin/VideoUpload";
 
 interface BMDRMVideoPlayerProps {
   videoId: string;
@@ -37,33 +38,26 @@ export default function BMDRMVideoPlayer({
   }, [videoId, lessonId]);
 
   const fetchVideoSession = async () => {
+    console.log("🚀 ~ fetchVideoSession ~ fetchVideoSession:", videoId);
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("/api/bmdrm/session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          videoId,
-          lessonId,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to get video session");
+      // Get BMDRM API key from environment
+      const apiKey = process.env.NEXT_PUBLIC_BMDRM_API_KEY;
+      if (!apiKey) {
+        throw new Error("BMDRM API key not configured");
       }
 
-      const data: BMDRMSessionResponse = await response.json();
+      // Use BMDRMUploader to get video session
+      const uploader = new BMDRMUploader();
+      const userId = "user-" + Date.now(); // This should be the actual authenticated user ID
 
-      if (!data.success) {
-        throw new Error(data.message || "Failed to get video session");
-      }
+      // Use the getVideoLinkFromBmdrm method (we need to add it back)
+      const url = await uploader.getVideoSession(videoId, userId, apiKey);
+      console.log("🚀 ~ fetchVideoSession ~ url:", url);
 
-      setVideoUrl(data.urlToEdge);
+      setVideoUrl(url);
     } catch (err) {
       console.error("Error fetching video session:", err);
       setError(err instanceof Error ? err.message : "Failed to load video");
@@ -117,9 +111,9 @@ export default function BMDRMVideoPlayer({
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
-  const retryLoad = () => {
+  const retryLoad = async () => {
     setVideoUrl(null);
-    fetchVideoSession();
+    await fetchVideoSession();
   };
 
   if (loading) {

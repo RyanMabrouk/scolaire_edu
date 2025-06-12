@@ -454,8 +454,9 @@ export default function EditCoursePage() {
           title: lesson.title,
           description: lesson.description,
           lesson_type: lesson.lesson_type,
-          bmdrm_video_id: lesson.bmdrm_video_id,
-          pdf_url: lesson.pdf_url,
+          bmdrm_video_id:
+            lesson.lesson_type === "bmdrm_video" ? lesson.bmdrm_video_id : null,
+          pdf_url: lesson.lesson_type === "pdf" ? lesson.pdf_url : null,
           duration_minutes: lesson.duration_minutes,
         },
       });
