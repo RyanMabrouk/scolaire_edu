@@ -166,11 +166,8 @@ class BMDRMUploader {
           method: "GET",
           headers: {
             apiKey: apiKey,
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": "true",
+            accept: "*/*",
           },
-          credentials: "include",
         },
       );
 

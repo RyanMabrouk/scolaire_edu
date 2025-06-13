@@ -180,43 +180,14 @@ export default function BMDRMVideoPlayer({
 
   return (
     <div className={`overflow-hidden rounded-lg bg-black ${className}`}>
-      <video
-        ref={videoRef}
+      <iframe
         src={videoUrl}
-        controls
-        onLoadedData={handleVideoLoad}
-        onEnded={handleVideoEnd}
-        onError={handleVideoError}
-        className="h-full w-full"
+        title={title}
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+        className="h-full w-full border-0"
         style={{ minHeight: "400px" }}
-        preload="metadata"
-      >
-        <p className="p-4 text-white">
-          Your browser does not support the video tag. Please update your
-          browser or try a different one.
-        </p>
-      </video>
-
-      {/* Progress indicator */}
-      {progress > 0 && (
-        <div className="bg-gray-800 px-4 py-2 text-sm text-white">
-          <div className="flex items-center justify-between">
-            <span>Progress: {progress}%</span>
-            {videoRef.current && (
-              <span>
-                {formatTime(videoRef.current.currentTime)} /{" "}
-                {formatTime(videoRef.current.duration || 0)}
-              </span>
-            )}
-          </div>
-          <div className="mt-2 h-1 w-full rounded-full bg-gray-600">
-            <div
-              className="h-1 rounded-full bg-blue-500 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
+      />
     </div>
   );
 }
